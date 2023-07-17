@@ -1,17 +1,23 @@
 #include "pacperson.h"
 #include <ncurses.h>
+#include <string.h>
+#include <stdlib.h>
 
 
-void pacman(unsigned int width, unsigned int height) {
-    object_t map[height][width];
+static object_t *map;
 
-    memset(map, WALL, height*width*sizeof(object_t));
+void create_map(unsigned int height, unsigned int width) {
+    map = calloc(height * width, sizeof(object_t));
+    memset(map, WALL, height * width * sizeof(object_t));
+}
+
+
+void pacman(unsigned int height, unsigned int width) {
+
+    create_map( height, width);
 
     printw("pacman! %u %u\n", height, width);
     getch();
-    
-
-
 
 
 }

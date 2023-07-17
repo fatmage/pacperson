@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <unistd.h>
 #include <getopt.h>
 
 #include "pacperson.h"
@@ -33,52 +34,42 @@ Options:\n\
 }
 
 
-
-
-
-
 int main(int argc, char **argv) {
 
     struct option options[] = {
-        {"version", no_argument, NULL, 'v'},
-        {"help",    no_argument, NULL, 'h'},
-        {"width",  no_argument, NULL, 'W'},
-        {"height",     no_argument, NULL, 'H'},
-        {"size", no_argument, NULL, 'S'},
+        {"version", no_argument,       NULL, 'v'},
+        {"help",    no_argument,       NULL, 'h'},
+        {"width",   required_argument, NULL, 'W'},
+        {"height",  required_argument, NULL, 'H'},
+        {"size",    required_argument, NULL, 'S'},
         {0, 0, 0, 0}
     };
 
     int c = 0;
-
-
-    unsigned int height = DEFAULT_HEIGHT, width = DEFAULT_WIDTH;
+    unsigned int height = DEFAULT_HEIGHT, width = DEFAULT_WIDTH, atoi_res;
     
 
 
-    while ((c = getopt_long(argc, argv, "hvH;S;W;", options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "hvW:H:S:", options, NULL)) != -1) {
 
         if (c == '?') {
             print_help();
             return EXIT_FAILURE;
         }
 
-        unsigned int atoi_res;
 
         switch (c) {
             case 'S':
-                atoi_res = atoi(argv[optind]);
-                
-                height = width = atoi_res < 15 ? atoi_res : 15;
+                atoi_res = atoi(optarg);   
+                height = width = atoi_res > 15 ? atoi_res : 15;
                 break;
             case 'W':
-                atoi_res = atoi(argv[optind]);
-                
-                width = atoi_res < 15 ? atoi_res : 15;
+                atoi_res = atoi(optarg);
+                width = atoi_res > 15 ? atoi_res : 15;
                 break;
             case 'H':
-                atoi_res = atoi(argv[optind]);
-                
-                height = atoi_res < 15 ? atoi_res : 15;
+                atoi_res = atoi(optarg); 
+                height = atoi_res > 15 ? atoi_res : 15;
                 break;
             case 'v':
                 print_version();
@@ -99,7 +90,6 @@ int main(int argc, char **argv) {
     pacman(height, width);
     endwin();
     
-
 
     return EXIT_SUCCESS;
 }
