@@ -1,8 +1,8 @@
-#include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <unistd.h>
+#include <stdint.h>
+
 #include <getopt.h>
 
 #include "pacperson.h"
@@ -39,24 +39,26 @@ int main(int argc, char **argv) {
     struct option options[] = {
         {"version", no_argument,       NULL, 'v'},
         {"help",    no_argument,       NULL, 'h'},
+        {"random",  no_argument,       NULL, 'r'},
         {"width",   required_argument, NULL, 'W'},
         {"height",  required_argument, NULL, 'H'},
         {"size",    required_argument, NULL, 'S'},
         {0, 0, 0, 0}
     };
 
-    int c = 0;
-    unsigned int height = DEFAULT_HEIGHT, width = DEFAULT_WIDTH, atoi_res;
+    char c = 0;
+
+    int random_flag = 0;
+
+    uint8_t height = DEFAULT_HEIGHT, width = DEFAULT_WIDTH, atoi_res;
     
 
-
-    while ((c = getopt_long(argc, argv, "hvW:H:S:", options, NULL)) != -1) {
+    while ((c = getopt_long(argc, argv, "hrvW:H:S:", options, NULL)) != -1) {
 
         if (c == '?') {
             print_help();
             return EXIT_FAILURE;
         }
-
 
         switch (c) {
             case 'S':
@@ -71,6 +73,9 @@ int main(int argc, char **argv) {
                 atoi_res = atoi(optarg); 
                 height = atoi_res > 15 ? atoi_res : 15;
                 break;
+            case 'r':
+                random_flag = TRUE;
+                break;
             case 'v':
                 print_version();
                 return EXIT_SUCCESS;
@@ -78,18 +83,15 @@ int main(int argc, char **argv) {
                 print_help();
                 return EXIT_SUCCESS;
             default:
-                print_help  ();
+                print_help();
                 return EXIT_FAILURE;
         }
     }
 
-    height |= 1;
-    width  |= 1;
+    height -= 1 - (height % 2);
+    width  -= 1 - (width  % 2);
 
-    initscr();
-    pacman(height, width);
-    endwin();
-    
+    pacman(height, width, random_flag);    
 
     return EXIT_SUCCESS;
 }
