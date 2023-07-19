@@ -12,15 +12,21 @@ void curses_init() {
 
 }
 
-void print_header() {
-    const char *title = "PacPerson";
+void print_header(uint16_t points, uint64_t time) {
+    char points_str[20] = {};
+    char time_str[20] = {};
+
+    sprintf(points_str, "Points: %d", points);
+    sprintf(time_str, "Time: %ld:%ld", time / 60, time % 60);
+
     int col = getmaxx(stdscr);
 
-    mvprintw(0, (col-strlen(title))/2, "%s", title);
+    mvprintw(1, col/7,   "%s", points_str);
+    mvprintw(1, col*6/7, "%s", time_str);
 }
 
 void print_footer(uint8_t offset) {
-    const char *footer = "v. "PROGRAM_VERSION" fatm4ge";
+    const char *footer = "PacPerson v. "PROGRAM_VERSION" fatm4ge";
     int col = getmaxx(stdscr);
 
     mvprintw(offset, (col-strlen(footer))/2, "%s", footer);
@@ -40,7 +46,7 @@ void print_map(WINDOW *win, object_t *map, uint8_t h, uint8_t w) {
                     waddch(win, '#');
                     break;
                 case FOOD:
-                    waddch(win, 'o');
+                    waddch(win, '.');
                     break;
                 case GHOST:
                     waddch(win, 'A');

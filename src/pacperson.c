@@ -7,8 +7,14 @@ static uint8_t map_width, map_height;
 
 static uint8_t playery = 1, playerx = 1; 
 static uint16_t points = 0;
+static uint8_t current_direction;
+static uint8_t desired_direction;
 
-#define GAME_FRAME_TIME (1.0f/30)
+static int directions[4][2] = { {0, -1}, {0, 1}, {-1, 0}, {1, 0} };
+
+static WINDOW* map_window;
+
+#define GAME_FRAME_TIME (1000.0f/7)
 #define GHOST_SPEED 10
 
 void create_random_map() {
@@ -80,25 +86,25 @@ void create_default_map() {
 
     object_t tmp_map[] = {
         WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, 
-        WALL, PLAYER, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, GHOST, WALL, 
-        WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, GHOST, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, WALL, EMPTY_FIELD, WALL, 
-        WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, EMPTY_FIELD, WALL, WALL, WALL, WALL, WALL, EMPTY_FIELD, WALL, 
-        WALL, GHOST, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, EMPTY_FIELD, GHOST, WALL, 
+        WALL, PLAYER, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, 
+        WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, 
+        WALL, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, WALL, 
+        WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, 
+        WALL, FOOD, WALL, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, WALL, FOOD, WALL, 
+        WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, 
+        WALL, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, GHOST, WALL, 
+        WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, 
+        WALL, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, WALL, 
+        WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, 
+        WALL, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, 
+        WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, 
+        WALL, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, 
+        WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, 
+        WALL, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, 
+        WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, 
+        WALL, FOOD, WALL, FOOD, FOOD, FOOD, GHOST, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, WALL, 
+        WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, 
+        WALL, GHOST, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, GHOST, WALL, 
         WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, 
     };
 
@@ -106,10 +112,43 @@ void create_default_map() {
         map[i] = tmp_map[i];
     }
 
+}
+
+void move_ghosts() {
 
 }
 
 
+int move_player() {
+
+    if (map[_2D_TO_1D(playery + directions[desired_direction][0], 
+                        playerx + directions[desired_direction][1], map_width)] != WALL) {
+
+        current_direction = desired_direction;
+    }
+
+
+    int new_playery = playery + directions[current_direction][0];
+    int new_playerx = playerx + directions[current_direction][1];  
+    int new_pos = _2D_TO_1D(new_playery, new_playerx, map_width);
+
+    switch (map[new_pos]) {
+        case FOOD:
+            points++;
+        case EMPTY_FIELD:
+            map[new_pos] = PLAYER;
+            map[_2D_TO_1D(playery, playerx, map_width)] = EMPTY_FIELD;
+            playery = new_playery;
+            playerx = new_playerx;
+            break;
+        case GHOST:
+            return 1;
+        default:
+            break;
+    }
+
+    return 0;
+}
 
 void pacman(uint8_t height, uint8_t width, int random_flag) {
 
@@ -131,96 +170,99 @@ void pacman(uint8_t height, uint8_t width, int random_flag) {
     int map_win_start_y = (LINES - map_height)/2;
     int map_win_start_x = (COLS - map_width)/2;
 
-    WINDOW *map_window = newwin(map_height, map_width, map_win_start_y, map_win_start_x);
+    map_window = newwin(map_height, map_width, map_win_start_y, map_win_start_x);
     nodelay(stdscr, TRUE);
 
-    print_header();
-    print_map(map_window, map, map_height, map_width);
-    print_footer(LINES - 1);
-
     
-    int prev_time = clock() / (CLOCKS_PER_SEC / 1000);
+    float prev_time = clock() * 1000.0f;
+    prev_time /= (float)CLOCKS_PER_SEC;
     float time_elapsed = 0.0;
     int ghost_frames = 0;
+
+    float milliseconds_elapsed = 0.0;
+
+    print_header(points, floor(milliseconds_elapsed / 1000));
+    print_map(map_window, map, map_height, map_width);
+    print_footer(LINES - 1);
  
     // game loop
     while (true) {
 
         int pressed;
 
-        time_elapsed += (clock() / CLOCKS_PER_SEC) - prev_time;
+        switch (pressed = getch()) {
+            case KEY_LEFT:
+                desired_direction = LEFT_DIR;
+                break;
+            case KEY_RIGHT:
+                desired_direction = RIGHT_DIR;
+                break;
+            case KEY_UP:
+                desired_direction = UP_DIR;
+                break;
+            case KEY_DOWN:
+                desired_direction = DOWN_DIR;
+                break;
+            case 'p':
+            // Fall-through
+            case 'P':
+                pause_game();
+                break;
+            case 'q':
+            // Fall-through
+            case 'Q':
+                goto GAME_OVER;
+            default:
+                break;
+        }  
 
-        if (2 > GAME_FRAME_TIME) {
+        float current_time = clock() * 1000;
+        current_time /= (float)CLOCKS_PER_SEC;
+
+
+        time_elapsed += current_time - prev_time;
+        milliseconds_elapsed += current_time - prev_time;
+        prev_time = current_time;
+
+        if (time_elapsed > GAME_FRAME_TIME) {
             time_elapsed -= GAME_FRAME_TIME;
             ghost_frames++;
 
-            if (ghost_frames > 10) {
-                // move ghosts
-                ghost_frames -= 10;
+            if (ghost_frames > 4) {
 
+                ghost_frames -= 4;
+                move_ghosts();
             }
 
-            int new_pos;
-            int new_playery = playery;
-            int new_playerx = playerx;
+            if (move_player()) {
+                end_game();
+                return;
+            }
 
-            switch (pressed = getch()) {
-                case KEY_LEFT:
-                    new_playerx -= 1;
-                    goto MOVE_PLAYER;
-                case KEY_RIGHT:
-                    new_playerx += 1;
-                    goto MOVE_PLAYER;
-                case KEY_UP:
-                    new_playery -= 1;
-                    goto MOVE_PLAYER;
-                case KEY_DOWN:
-                    new_playery += 1;
-             
-MOVE_PLAYER:
-                    new_pos = _2D_TO_1D(new_playery, new_playerx, map_width);
-                    switch (map[new_pos]) {
-                        case FOOD:
-                            points++;
-                        case EMPTY_FIELD:
-                            map[new_pos] = PLAYER;
-                            map[_2D_TO_1D(playery, playerx, map_width)] = EMPTY_FIELD;
-                            playery = new_playery;
-                            playerx = new_playerx;
-                            break;
-                        case GHOST:
-                            goto GAME_OVER;
-                        default:
-                            break;
-                    }
-                    break;
-                case 'q':
-                // Fall-through
-                case 'Q':
-                    // PAUZA
-                    break;
-                default:
-                    break;
-            }      
+            print_map(map_window, map, map_height, map_width);
+            print_header(points, floor(milliseconds_elapsed / 1000));
 
+            wrefresh(stdscr);
+            wrefresh(map_window);
         }
-
-
-        print_map(map_window, map, map_height, map_width);
-
-        wrefresh(stdscr);
-        wrefresh(map_window);
-
-
     }
 
 
 GAME_OVER:
 
+    end_game();
+
+}
 
 
+void pause_game() {
+
+}
+
+void end_game() {
     free(map);
     delwin(map_window);
     endwin();
 
+    printf("Wynik końcowy: %d\n", points);
 }
