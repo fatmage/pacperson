@@ -9,13 +9,14 @@ static uint8_t playery = 1, playerx = 1;
 static uint16_t points = 0;
 static uint8_t current_direction;
 static uint8_t desired_direction;
+static uint8_t ghosts[4][2];
+static uint8_t ghost_directions[4];
+static object_t ghosts_floor[4] = {FOOD, FOOD, FOOD, FOOD};
 
 static int directions[4][2] = { {0, -1}, {0, 1}, {-1, 0}, {1, 0} };
 
 static WINDOW* map_window;
 
-#define GAME_FRAME_TIME (1000.0f/7)
-#define GHOST_SPEED 10
 
 void create_random_map() {
 
@@ -92,7 +93,7 @@ void create_default_map() {
         WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, 
         WALL, FOOD, WALL, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, WALL, FOOD, WALL, 
         WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, 
-        WALL, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, GHOST, WALL, 
+        WALL, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, 
         WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, WALL, WALL, FOOD, WALL, 
         WALL, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, WALL, FOOD, FOOD, FOOD, FOOD, FOOD, WALL, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, FOOD, FOOD, WALL, FOOD, WALL, 
         WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, WALL, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, FOOD, WALL, 
@@ -112,12 +113,107 @@ void create_default_map() {
         map[i] = tmp_map[i];
     }
 
+    ghosts[0][0] = map_height - 2;
+    ghosts[0][1] = 1;
+    ghost_directions[0] = UP_DIR;
+
+    ghosts[1][0] = 1;
+    ghosts[1][1] = map_width - 2;
+    ghost_directions[1] = LEFT_DIR;
+
+    ghosts[2][0] = map_height - 2;
+    ghosts[2][1] = map_width - 2;
+    ghost_directions[2] = UP_DIR;
+
+    ghosts[3][0] = map_height - 4;
+    ghosts[3][1] = 6;
+    ghost_directions[3] = LEFT_DIR;
+
 }
 
 void move_ghosts() {
 
-}
+    uint8_t turn_directions[4] = {LEFT_DIR, RIGHT_DIR, UP_DIR, DOWN_DIR};
 
+    uint8_t possible_directions[4];
+
+    for (int curr_ghost = 0; curr_ghost < 4; curr_ghost++) {
+
+        // fill possible_directions array
+        int j = 0;
+        for (int i = 0; i < 4; i++) {
+            switch(ghost_directions[curr_ghost]) {
+                case LEFT_DIR:
+                    possible_directions[3] = RIGHT_DIR;
+                    if (turn_directions[i] != RIGHT_DIR) {
+                        possible_directions[j] = turn_directions[i];
+                        j++;
+                    }
+                    break;
+                case RIGHT_DIR:
+                    possible_directions[3] = LEFT_DIR;
+                    if (turn_directions[i] != LEFT_DIR) {
+                        possible_directions[j] = turn_directions[i];
+                        j++;
+                    }
+                    break;
+                case UP_DIR:
+                    possible_directions[3] = DOWN_DIR;
+                    if (turn_directions[i] != DOWN_DIR) {
+                        possible_directions[j] = turn_directions[i];
+                        j++;
+                    }
+                    break;
+                case DOWN_DIR:
+                    possible_directions[3] = UP_DIR;
+                    if (turn_directions[i] != UP_DIR) {
+                        possible_directions[j] = turn_directions[i];
+                        j++;
+                    }
+                    break;
+            }
+        }
+
+        for (int i = 0; i < 2; i++) {
+            int j = i + rand() / (RAND_MAX / (3 - i) + 1);
+            uint8_t tmp = possible_directions[j];
+            possible_directions[j] = possible_directions[i];
+            possible_directions[i] = tmp;
+        }
+
+        int new_pos = 0;
+        for (int i = 0; i < 4; i++) {
+            new_pos = _2D_TO_1D(ghosts[curr_ghost][0] + directions[possible_directions[i]][0],
+                                ghosts[curr_ghost][1] + directions[possible_directions[i]][1], map_width);
+            if (map[new_pos] == EMPTY_FIELD || map[new_pos] == FOOD || map[new_pos] == GHOST) {
+                ghost_directions[curr_ghost] = possible_directions[i];
+                break;
+            }
+        }
+
+
+
+        map[_2D_TO_1D(ghosts[curr_ghost][0], ghosts[curr_ghost][1], map_width)] = ghosts_floor[curr_ghost];
+        if (map[new_pos] == GHOST) {
+            for (int i = 0; i < 4; i++) {
+                if (_2D_TO_1D(ghosts[i][0], ghosts[i][1], map_width) == new_pos) {
+                    ghosts_floor[curr_ghost] = ghosts_floor[i];
+                }
+            }
+        } else {
+            ghosts_floor[curr_ghost] = map[new_pos];
+        }
+
+        map[new_pos] = GHOST;
+        ghosts[curr_ghost][0] += directions[ghost_directions[curr_ghost]][0];
+        ghosts[curr_ghost][1] += directions[ghost_directions[curr_ghost]][1];
+
+    }
+
+
+
+
+}
 
 int move_player() {
 
@@ -228,9 +324,9 @@ void pacman(uint8_t height, uint8_t width, int random_flag) {
             time_elapsed -= GAME_FRAME_TIME;
             ghost_frames++;
 
-            if (ghost_frames > 4) {
+            if (ghost_frames > GHOST_SPEED) {
 
-                ghost_frames -= 4;
+                ghost_frames -= GHOST_SPEED;
                 move_ghosts();
             }
 
@@ -254,7 +350,6 @@ GAME_OVER:
 
 }
 
-
 void pause_game() {
 
 }
@@ -264,5 +359,5 @@ void end_game() {
     delwin(map_window);
     endwin();
 
-    printf("Wynik końcowy: %d\n", points);
+    printf("Final result: %d\n", points);
 }

@@ -12,6 +12,9 @@
 #define DEFAULT_HEIGHT 21
 #define DEFAULT_WIDTH  31
 
+#define GAME_FRAME_TIME (1000.0f/7)
+#define GHOST_SPEED 4
+
 
 #define _2D_TO_1D(y, x, width) (((y) * (width)) + ((x) % (width)))
 #define _1D_TO_X(pos, width) ((pos) % (width))

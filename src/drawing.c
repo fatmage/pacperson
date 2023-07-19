@@ -14,15 +14,19 @@ void curses_init() {
 
 void print_header(uint16_t points, uint64_t time) {
     char points_str[20] = {};
-    char time_str[20] = {};
+    char time_str1[20] = {};
+    char time_str2[5] = {};
 
     sprintf(points_str, "Points: %d", points);
-    sprintf(time_str, "Time: %ld:%ld", time / 60, time % 60);
+    sprintf(time_str1, "Time: %ld", time / 60);
+    sprintf(time_str2,": %ld", time % 60);
+
 
     int col = getmaxx(stdscr);
 
     mvprintw(1, col/7,   "%s", points_str);
-    mvprintw(1, col*6/7, "%s", time_str);
+    mvprintw(1, col*6/7, "%s", time_str1);
+    mvprintw(1, col*6/7 + 8, "%s", time_str2);
 }
 
 void print_footer(uint8_t offset) {
