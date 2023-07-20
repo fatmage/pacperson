@@ -1,13 +1,16 @@
 # PacPerson
-simple pacman game using ncurses
+Simple pacman game using ncurses library.
+
+## Installation
+
+To compile the game using `make`, simply type `make` in terminal. 
 
 
 ## TODO:
 - pausing
 - random maps
 - variable number of ghosts
-- better UI
-- better graphics
+
 
 Maybe:
 - better ghost AI (chasing the player or running from him)

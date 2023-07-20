@@ -12,7 +12,7 @@
 #define DEFAULT_HEIGHT 21
 #define DEFAULT_WIDTH  31
 
-#define GAME_FRAME_TIME (1000.0f/7)
+#define GAME_FRAME_TIME (1000.0f/10)
 #define GHOST_SPEED 4
 
 
@@ -20,7 +20,7 @@
 #define _1D_TO_X(pos, width) ((pos) % (width))
 #define _1D_TO_Y(pos, width) ((pos) / (width))
 
-#define PROGRAM_VERSION "0.1.0"
+#define PROGRAM_VERSION "1.0.0"
 
 typedef enum object_t {
     EMPTY_FIELD = 0,
@@ -35,10 +35,12 @@ typedef enum object_t {
 #define UP_DIR    2
 #define DOWN_DIR  3
 
+#define DEFAULT_GHOSTS 4
+
 
 
 void pacman(uint8_t height, uint8_t width, int random_flag);
-void move_ghosts();
+int move_ghosts();
 int  move_player();
 
 void pause_game();

@@ -15,6 +15,8 @@ static object_t ghosts_floor[4] = {FOOD, FOOD, FOOD, FOOD};
 
 static int directions[4][2] = { {0, -1}, {0, 1}, {-1, 0}, {1, 0} };
 
+static int ghosts_count = DEFAULT_GHOSTS;
+
 static WINDOW* map_window;
 
 
@@ -131,13 +133,13 @@ void create_default_map() {
 
 }
 
-void move_ghosts() {
+int move_ghosts() {
 
     uint8_t turn_directions[4] = {LEFT_DIR, RIGHT_DIR, UP_DIR, DOWN_DIR};
 
     uint8_t possible_directions[4];
 
-    for (int curr_ghost = 0; curr_ghost < 4; curr_ghost++) {
+    for (int curr_ghost = 0; curr_ghost < ghosts_count; curr_ghost++) {
 
         // fill possible_directions array
         int j = 0;
@@ -185,7 +187,7 @@ void move_ghosts() {
         for (int i = 0; i < 4; i++) {
             new_pos = _2D_TO_1D(ghosts[curr_ghost][0] + directions[possible_directions[i]][0],
                                 ghosts[curr_ghost][1] + directions[possible_directions[i]][1], map_width);
-            if (map[new_pos] == EMPTY_FIELD || map[new_pos] == FOOD || map[new_pos] == GHOST) {
+            if (map[new_pos] == EMPTY_FIELD || map[new_pos] == FOOD || map[new_pos] == GHOST || map[new_pos] == PLAYER) {
                 ghost_directions[curr_ghost] = possible_directions[i];
                 break;
             }
@@ -195,11 +197,13 @@ void move_ghosts() {
 
         map[_2D_TO_1D(ghosts[curr_ghost][0], ghosts[curr_ghost][1], map_width)] = ghosts_floor[curr_ghost];
         if (map[new_pos] == GHOST) {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < ghosts_count; i++) {
                 if (_2D_TO_1D(ghosts[i][0], ghosts[i][1], map_width) == new_pos) {
                     ghosts_floor[curr_ghost] = ghosts_floor[i];
                 }
             }
+        } else if (map[new_pos] == PLAYER) {
+            return 1;
         } else {
             ghosts_floor[curr_ghost] = map[new_pos];
         }
@@ -210,9 +214,7 @@ void move_ghosts() {
 
     }
 
-
-
-
+    return 0;
 }
 
 int move_player() {
@@ -262,22 +264,20 @@ void pacman(uint8_t height, uint8_t width, int random_flag) {
         create_default_map();
     }
 
-
     int map_win_start_y = (LINES - map_height)/2;
-    int map_win_start_x = (COLS - map_width)/2;
+    int map_win_start_x = (COLS - (map_width * 2))/2;
 
-    map_window = newwin(map_height, map_width, map_win_start_y, map_win_start_x);
-    nodelay(stdscr, TRUE);
+    map_window = newwin(map_height, map_width * 2, map_win_start_y, map_win_start_x);
 
-    
+
     float prev_time = clock() * 1000.0f;
     prev_time /= (float)CLOCKS_PER_SEC;
     float time_elapsed = 0.0;
+    float milliseconds_elapsed = 0.0;
     int ghost_frames = 0;
 
-    float milliseconds_elapsed = 0.0;
 
-    print_header(points, floor(milliseconds_elapsed / 1000));
+    print_header(points, floor(milliseconds_elapsed / 1000), map_width * 2);
     print_map(map_window, map, map_height, map_width);
     print_footer(LINES - 1);
  
@@ -315,7 +315,6 @@ void pacman(uint8_t height, uint8_t width, int random_flag) {
         float current_time = clock() * 1000;
         current_time /= (float)CLOCKS_PER_SEC;
 
-
         time_elapsed += current_time - prev_time;
         milliseconds_elapsed += current_time - prev_time;
         prev_time = current_time;
@@ -325,18 +324,19 @@ void pacman(uint8_t height, uint8_t width, int random_flag) {
             ghost_frames++;
 
             if (ghost_frames > GHOST_SPEED) {
-
                 ghost_frames -= GHOST_SPEED;
-                move_ghosts();
+                if (move_ghosts()) {
+                    goto GAME_OVER;
+                }
             }
 
             if (move_player()) {
-                end_game();
-                return;
+                goto GAME_OVER;
             }
 
             print_map(map_window, map, map_height, map_width);
-            print_header(points, floor(milliseconds_elapsed / 1000));
+            print_header(points, floor(milliseconds_elapsed / 1000), map_width * 2);
+            print_footer(LINES - 1);
 
             wrefresh(stdscr);
             wrefresh(map_window);
